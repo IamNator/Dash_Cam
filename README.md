@@ -3,4 +3,4 @@ This dash cam is designed to support both Audio and Video recording. It uses two
 
 [Documentation](https://docs.google.com/document/d/1LtWO_IcNbJ7sfWBFgHGUc6nKqhitYqpvLzOcLqV0Ibc/edit?usp=sharing)
 
-[Dash cam top view]<img src="IamNator.github.com/Dash_cam/Media/Dash_cam_top_view.jpg">
+[Dash cam top view]<img src="https://github.com/IamNator/Dash_cam/Media/Dash_cam_top_view.jpg">
