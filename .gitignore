@@ -1,2 +1,4 @@
-Rawcode/Stm32f407xxx/dash\ cam/*
-!Rawcode/Stm32f407xxx/dash\ cam/Core/*
+Rawcode/Stm32f407xxx/dashcam/*
+!Rawcode/Stm32f407xxx/dashcam/Core/
+!Rawcode/Stm32f407xxx/dashcam/dash\ cam.ioc
+!Rawcode/Stm32f407xxx/dashcam/.mxproject
