@@ -3,6 +3,8 @@ This dash cam is designed to support both Audio and Video recording. It uses two
 
 [Documentation](https://docs.google.com/document/d/1LtWO_IcNbJ7sfWBFgHGUc6nKqhitYqpvLzOcLqV0Ibc/edit?usp=sharing)
 
-[Dash cam top view]<img src="https://github.com/IamNator/Dash_cam/blob/master/Media/Dash_cam_top_view.PNG">
 
-[Dash cam bottom view]<img src="https://github.com/IamNator/Dash_cam/blob/master/Media/Dash_cam_bottom_view.PNG">
+
+<img src="https://github.com/IamNator/Dash_cam/blob/master/Media/Dash_cam_top_view.PNG" width=300 height=300 align=right alt=Dash cam top view >
+
+<img src="https://github.com/IamNator/Dash_cam/blob/master/Media/Dash_cam_bottom_view.PNG" width=300 height=300 align=left all="Dash cam bottom view">
