@@ -19,7 +19,7 @@ This Board is designed to support both Audio and Video recording. It uses two ca
 The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each of these chips will need to be programmed
 
 ####  esp32_1 and esp32_2
-* You will require an <a href="https://learn.adafruit.com/ftdi-friend/ftdi-friend-vs-avr-programmer">FTDI</a> programmer for this.
+* You will require an <a href="https://learn.adafruit.com/ftdi-friend/overview">FTDI</a> programmer for this.
 * Connect the programmer to appropriate pins are shown in the diagram below.
 * Run the install_firmware.* as explained below.
 
