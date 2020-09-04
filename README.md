@@ -27,6 +27,7 @@ The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each
 * All you will need for this process a USB type-C.
 * Plug the board to your computer through the USB cable. 
 * Run the install_firmware.* as explained below.
+* For more information <a href="http://www.emcu.eu/how-to-program-the-stm32/#JTAG%E2%80%93SWDconnector">check here.</a> 
 
 ### Uploading the firmware
 * Navigate to the <b>Binaries</b> subfolder in your already extracted file.
