@@ -3,7 +3,7 @@
 *  FTP SERVER FOR ESP8266
  * based on FTP Serveur for Arduino Due and Ethernet shield (W5100) or WIZ820io (W5200)
  * based on Jean-Michel Gallego's work
- * modified to work with esp8266 SPIFFS by David Paiva (david@nailbuster.com)
+ * modified to work with esp8266 S2PIFFS by David Paiva (david@nailbuster.com)
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,15 +56,19 @@
 class FtpServer
 {
 public:
+
   void    begin(String uname, String pword);
   void    handleFTP();
 
 private:
- bool haveParameter();
-bool    makeExistsPath( char * path, char * param = NULL );
+
+  bool haveParameter();
+  bool makeExistsPath( char * path, char * param = NULL );
+
   void    iniVariables();
   void    clientConnected();
   void    disconnectClient();
+
   boolean userIdentity();
   boolean userPassword();
   boolean processCommand();
