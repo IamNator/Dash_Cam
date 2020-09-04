@@ -45,3 +45,5 @@ The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each
 ### Resources we found useful 
 * <a href="https://www.youtube.com/watch?v=lc_gXfkoRZo" > A YouTube video explain video capture using esp32-cam </a>
 * <a href="https://github.com/jameszah/ESP32-CAM-Video-Recorder" > A Github repo on video capturing using esp32-cam </a>
+* <a href="https://github.com/aospfhem/kernel_htc_flounder/blob/5171b313df7e7a86440d4f9b20770f7996aa23d3/drivers/media/platform/tegra/ov2710.c"> Driver for ov2710 on Linux </a>
+
