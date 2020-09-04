@@ -38,3 +38,4 @@ The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each
 
 ### Useful links 
 * <a href="https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html#introduction">Esp32 programming using cmd or bash</a>
+* <a href="https://www.ftdichip.com/Drivers/VCP.htm">FTDI main site</a>
