@@ -18,12 +18,12 @@ This dash camera is designed to support both Audio and Video recording. It uses 
 ### setting up the board for programming
 The board has three microchips on it; namely esp32_1, esp32_2 and stm32f4xx. Each of these chips will need to be programmed
 
-#### esp32_1 and esp32_2
+####  esp32_1 and esp32_2
 * You will require an <a href=" ">FTDI</a> programmer for this.
 * Connect the programmer the appropriate pins are shown in the diagram below.
 * Run the install_firmware.* as explained below.
 
-#### stm32f4xx.
+####  stm32f4xx.
 * All you will need for this process a USB type-C.
 * Plug the board to your computer through the USB cable 
 * Run the install_firmware.* as explained below.
