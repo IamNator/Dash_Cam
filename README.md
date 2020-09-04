@@ -15,7 +15,7 @@ This Board is designed to support both Audio and Video recording. It uses two ca
 * Extract the zip file. This contains all the files we'll be needing.
 * Get the board Fabricated by your favorite PCB Manufacturer. (files needed for this can be found under the subfolder <b>PCB</b>
 
-### setting up the board for programming
+### Setting up the board for programming
 The board has three microchips on it; namely esp32_1, esp32_2 and stm32f4xx. Each of these chips will need to be programmed
 
 ####  esp32_1 and esp32_2
@@ -28,7 +28,7 @@ The board has three microchips on it; namely esp32_1, esp32_2 and stm32f4xx. Eac
 * Plug the board to your computer through the USB cable 
 * Run the install_firmware.* as explained below.
 
-### uploading the firmware
+### Uploading the firmware
 * Navigate to the <b>Binaries</b> subfolder in your already extracted file.
 * Make sure the drivers listed in the driverlist.txt are installed on your system.
 * Run the Batch file install_firmware.bat on windows or Bash file install_firmware.sh if using a mac or linux
