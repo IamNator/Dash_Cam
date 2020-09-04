@@ -39,3 +39,5 @@ The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each
 ### Useful links 
 * <a href="https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html#introduction">Esp32 programming using cmd or bash</a>
 * <a href="https://www.ftdichip.com/Drivers/VCP.htm">FTDI main site</a>
+* <a href="http://www.emcu.eu/how-to-program-the-stm32/"> Programming the STM32 </a>
+* <a href="https://www.st.com/resource/en/application_note/cd00264379-usb-dfu-protocol-used-in-the-stm32-bootloader-stmicroelectronics.pdf" > PDF showing DFU protocol used in stm32 </a>
