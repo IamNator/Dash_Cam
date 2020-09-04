@@ -13,10 +13,10 @@ This Board is designed to support both Audio and Video recording. It uses two ca
 ### Fabricate the board
 * click on the green code button and download the zip file for this repository.
 * Extract the zip file. This contains all the files we'll be needing.
-* Get the board Fabricated by your favorite PCB Manufacturer. (files needed for this can be found under the subfolder <b>PCB</b>)
+* Get the board Fabricated by your favorite PCB Manufacturer (files needed for this can be found under the subfolder <b>PCB</b>).
 
 ### Setting up the board for programming
-The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each of these chips will need to be programmed
+The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each of these chips will need to be programmed.
 
 ####  esp32_1 and esp32_2
 * You will require an <a href="https://learn.adafruit.com/ftdi-friend/overview">FTDI</a> programmer for this.
@@ -25,11 +25,11 @@ The board has three microchip on it; namely esp32_1, esp32_2 and stm32f4xx. Each
 
 ####  stm32f4xx.
 * All you will need for this process a USB type-C.
-* Plug the board to your computer through the USB cable 
+* Plug the board to your computer through the USB cable. 
 * Run the install_firmware.* as explained below.
 
 ### Uploading the firmware
 * Navigate to the <b>Binaries</b> subfolder in your already extracted file.
 * Make sure the drivers listed in the driverlist.txt are installed on your system.
 * Run the Batch file install_firmware.bat on windows or Bash file install_firmware.sh if you're using a mac or linux
-* Follow the Prompts to complete the process (Admin/su previlleges may be required)
+* Follow the Prompts to complete the process (Admin/su previlleges may be required).
