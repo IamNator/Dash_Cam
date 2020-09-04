@@ -1,0 +1,1 @@
+FTDI Driver (tutorial -  https://learn.adafruit.com/ftdi-friend/installing-ftdi-drivers) (link_to_download - https://www.ftdichip.com/Drivers/VCP.htm)
