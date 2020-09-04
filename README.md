@@ -4,8 +4,8 @@ This dash camera is designed to support both Audio and Video recording. It uses 
 [Documentation](https://docs.google.com/document/d/1LtWO_IcNbJ7sfWBFgHGUc6nKqhitYqpvLzOcLqV0Ibc/edit?usp=sharing)
 
 #
-<div class="row"><img src="https://github.com/IamNator/Dash_cam/blob/master/Media/dash_cam_rotate.gif" width=260 height=200 align=center all="Dash cam 360 view">
-<img src="https://github.com/IamNator/Dash_cam/blob/master/Media/dash-cam-flip-diagonally.gif" width=260 height=200 align=center all="Dash cam 360 view"> <img src="https://github.com/IamNator/Dash_cam/blob/master/Media/dash-cam-top-rotates.gif" width=260 height=200 align=center all="Dash cam 360 view">
+<div class="row" align=center ><img src="https://github.com/IamNator/Dash_cam/blob/master/Media/dash_cam_rotate.gif" width=310 height=270 align=center all="Dash cam 360 view">
+<img src="https://github.com/IamNator/Dash_cam/blob/master/Media/dash-cam-flip-diagonally.gif" width=310 height=270 align=center all="Dash cam 360 view"> <img src="https://github.com/IamNator/Dash_cam/blob/master/Media/dash-cam-top-rotates.gif" width=310 height=270 align=center all="Dash cam 360 view">
 </div>
 
 ## Getting Started
