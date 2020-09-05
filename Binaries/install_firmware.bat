@@ -6,3 +6,4 @@ echo .
 echo                       This will guide you through the process
 
 pause
+cls
