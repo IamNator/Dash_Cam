@@ -75,8 +75,10 @@ private:
   boolean dataConnect();
   boolean doRetrieve();
   boolean doStore();
+
   void    closeTransfer();
   void    abortTransfer();
+  
   boolean makePath( char * fullname );
   boolean makePath( char * fullName, char * param );
   uint8_t getDateTime( uint16_t * pyear, uint8_t * pmonth, uint8_t * pday,

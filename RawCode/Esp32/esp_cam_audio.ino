@@ -211,7 +211,7 @@ const int avi_header[AVIOFFSET] PROGMEM = {
 // AviWriterTask runs on cpu 1 to write the avi file
 //
 
-TaskHandle_t CameraTask, AviWriterTask; 
+TaskHandle_t CameraTask, AviWriterTask;
 SemaphoreHandle_t baton;
 int counter = 0;
 
@@ -1432,7 +1432,7 @@ void do_start(char *the_message) {
 
   Serial.print("do_start "); Serial.println(the_message);
 
-  const char msg[] PROGMEM = Rrawliteral("<!doctype html>
+  const char msg[] PROGMEM = R"rawliteral(<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -1463,9 +1463,11 @@ void do_start(char *the_message) {
 
 }
 
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 // 
+
 void do_stop(char *the_message) {
 
   Serial.print("do_stop "); Serial.println(the_message);
