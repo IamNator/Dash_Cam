@@ -29,16 +29,7 @@
 */
 //#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
-#include "esp_http_server.h"
 #include "esp_camera.h"
-
-
-// Time
-#include "time.h"
-#include "lwip/err.h"
-#include "lwip/apps/sntp.h"
-
-
 
 
 long current_millis;
@@ -56,7 +47,8 @@ char *filename ;
 char *stream ;
 int newfile = 0;
 int frames_so_far = 0;
-FILE *myfile;
+
+
 long bp;
 long ap;
 long bw;
