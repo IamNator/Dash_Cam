@@ -321,6 +321,8 @@ static const int spiClk = 1000000; // 1 MHz
 SPIClass * hspi = NULL;
 
 
+#define stat_led 33
+
 
 void setup() {
   //WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector  // creates other problems
