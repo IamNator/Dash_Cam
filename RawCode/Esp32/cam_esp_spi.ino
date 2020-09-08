@@ -213,7 +213,7 @@ void codeForCameraTask( void * parameter )
 
         last_capture_millis = millis();
 
-        xSemaphoreTake( baton, portMAX_DELAY );
+        xSemaphoreTake( baton, portMAX_DELAY ); 
 
         if  ( ( (fb_in + fb_max - fb_out) % fb_max) + 1 == fb_max ) {
           xSemaphoreGive( baton );
