@@ -21,11 +21,7 @@
 
   Also, other SD chips will be faster or slower.  I was using a SanDisk 16GB microSDHC "Up to 653X" - which was slower and more unpredictable than the LEXAR ???
 
-  Search for "zzz" to find places to modify the code for:
-    1.  Your wifi name and password
-    2.  Your preferred ip address (with default gateway, etc)
-    3.  Your Timezone for use in filenames
-    4.  Defaults for framesize, quality, ... and if the recording should start on reboot of the ESP32 without receiving a command
+
 */
 //#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
@@ -100,7 +96,7 @@ bool is_header = false;
 long bigdelta = 0;
 int other_cpu_active = 0;
 int skipping = 0;
-int skipped = 0;
+int skipped = 0;s
 
 int fb_max = 12;
 
@@ -109,10 +105,6 @@ int fb_in = 0;
 int fb_out = 0;
 
 camera_fb_t * fb = NULL;
-
-FILE *avifile = NULL;
-FILE *idxfile = NULL;
-
 
 
 // these are just declarations -- look below to edit defaults
@@ -149,23 +141,6 @@ uint8_t uxga_w[2] = {0x40, 0x06}; // 1600
 uint8_t uxga_h[2] = {0xB0, 0x04}; // 1200
 
 
-const int avi_header[AVIOFFSET] PROGMEM = {
-  0x52, 0x49, 0x46, 0x46, 0xD8, 0x01, 0x0E, 0x00, 0x41, 0x56, 0x49, 0x20, 0x4C, 0x49, 0x53, 0x54,
-  0xD0, 0x00, 0x00, 0x00, 0x68, 0x64, 0x72, 0x6C, 0x61, 0x76, 0x69, 0x68, 0x38, 0x00, 0x00, 0x00,
-  0xA0, 0x86, 0x01, 0x00, 0x80, 0x66, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
-  0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x80, 0x02, 0x00, 0x00, 0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4C, 0x49, 0x53, 0x54, 0x84, 0x00, 0x00, 0x00,
-  0x73, 0x74, 0x72, 0x6C, 0x73, 0x74, 0x72, 0x68, 0x30, 0x00, 0x00, 0x00, 0x76, 0x69, 0x64, 0x73,
-  0x4D, 0x4A, 0x50, 0x47, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x73, 0x74, 0x72, 0x66,
-  0x28, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x80, 0x02, 0x00, 0x00, 0xe0, 0x01, 0x00, 0x00,
-  0x01, 0x00, 0x18, 0x00, 0x4D, 0x4A, 0x50, 0x47, 0x00, 0x84, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x49, 0x4E, 0x46, 0x4F,
-  0x10, 0x00, 0x00, 0x00, 0x6A, 0x61, 0x6D, 0x65, 0x73, 0x7A, 0x61, 0x68, 0x61, 0x72, 0x79, 0x20,
-  0x76, 0x33, 0x39, 0x20, 0x4C, 0x49, 0x53, 0x54, 0x00, 0x01, 0x0E, 0x00, 0x6D, 0x6F, 0x76, 0x69,
-};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
@@ -268,31 +243,6 @@ void codeForCameraTask( void * parameter )
 }
 
 
-//
-// Writes an uint32_t in Big Endian at current file position
-//
-static void inline print_quartet(unsigned long i, FILE * fd)
-{
-  uint8_t x[1];
-
-  x[0] = i % 0x100;
-  size_t i1_err = fwrite(x , 1, 1, fd);
-  i = i >> 8;  x[0] = i % 0x100;
-  size_t i2_err = fwrite(x , 1, 1, fd);
-  i = i >> 8;  x[0] = i % 0x100;
-  size_t i3_err = fwrite(x , 1, 1, fd);
-  i = i >> 8;  x[0] = i % 0x100;
-  size_t i4_err = fwrite(x , 1, 1, fd);
-}
-
-
-void startCameraServer();
-httpd_handle_t camera_httpd = NULL;
-
-char the_page[3000];
-
-char localip[20];
-WiFiEventId_t eventID;
 
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
@@ -364,9 +314,6 @@ void setup() {
   }
 
 
- 
-  startCameraServer();
-
   print_stats("After Server init Core: ");
 
   // zzz username and password for ftp server
@@ -401,8 +348,22 @@ void setup() {
 
 
   Serial.print("Camera Ready! Use 'http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("' to connect");
+
+
+  //initialise two instances of the SPIClass attached to VSPI and HSPI respectively
+ // vspi = new SPIClass(VSPI);
+  hspi = new SPIClass(HSPI);
+  
+  //initialise hspi with default pins
+  //SCLK = 14, MISO = 12, MOSI = 13, SS = 15
+  hspi->begin(); 
+  //alternatively route through GPIO pins
+  //hspi->begin(25, 26, 27, 32); //SCLK, MISO, MOSI, SS
+
+  //set up slave select pins as outputs as the Arduino API
+  //doesn't handle automatically pulling SS low
+  pinMode(15, OUTPUT); //HSPI SS
+
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -448,11 +409,9 @@ void major_fail() {
     delay(1000);
   }
 
-  ESP.restart();        
+  ESP.restart();
 
 }
-
-
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -469,10 +428,10 @@ void major_fail() {
 void make_avi( ) {
 
   // we are recording, but no file is open
-  if (newfile == 0 && recording == 1) {                                     // open the file
+  if (newVideo == 0 && recording == 1) {                                     // open the file
 
     digitalWrite(stat_led, HIGH);
-    newfile = 1;
+    newVideo = 1;
     start_avi();
 
   } else {
@@ -637,34 +596,7 @@ static esp_err_t start_avi() {
 
   strftime(strftime_buf, sizeof(strftime_buf), "%F_%H.%M.%S", &timeinfo);
 
-  char fname[100];
-
-  if (framesize == 6) {
-    sprintf(fname, "/sdcard/%s_vga_Q%d_I%d_L%d_S%d.avi", strftime_buf, quality, capture_interval, xlength, xspeed);
-  } else if (framesize == 7) {
-    sprintf(fname, "/sdcard/%s_svga_Q%d_I%d_L%d_S%d.avi", strftime_buf, quality, capture_interval, xlength, xspeed);
-  } else if (framesize == 10) {
-    sprintf(fname, "/sdcard/%s_uxga_Q%d_I%d_L%d_S%d.avi", strftime_buf, quality, capture_interval, xlength, xspeed);
-  } else  if (framesize == 5) {
-    sprintf(fname, "/sdcard/%s_cif_Q%d_I%d_L%d_S%d.avi", strftime_buf, quality, capture_interval, xlength, xspeed);
-  } else {
-    Serial.println("Wrong framesize");
-    sprintf(fname, "/sdcard/%s_xxx_Q%d_I%d_L%d_S%d.avi", strftime_buf, quality, capture_interval, xlength, xspeed);
-  }
-
-  Serial.print("\nFile name will be >"); Serial.print(fname); Serial.println("<");
-
-  avifile = fopen(fname, "w");
-  idxfile = fopen("/sdcard/idx.tmp", "w");
-
-  if (avifile != NULL)  {
-
-    //Serial.printf("File open: %s\n", fname);
-
-  }  else  {
-    Serial.println("Could not open file");
-    major_fail();
-  }
+  
 
   if (idxfile != NULL)  {
 
@@ -1007,38 +939,3 @@ void loop()
 
 }
 
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//
-// 
-
-static esp_err_t capture_handler(httpd_req_t *req) {
-
-  camera_fb_t * fb = NULL;
-  esp_err_t res = ESP_OK;
-  char fname[100];
-  xSemaphoreTake( baton, portMAX_DELAY );
-  fb = esp_camera_fb_get();
-
-  if (!fb) {
-    Serial.println("Camera capture failed");
-    httpd_resp_send_500(req);
-    xSemaphoreGive( baton );
-    return ESP_FAIL;
-  }
-
-  file_number++;
-
-  sprintf(fname, "inline; filename=capture_%d.jpg", file_number);
-
-  httpd_resp_set_type(req, "image/jpeg");
-  httpd_resp_set_hdr(req, "Content-Disposition", fname);
-
-  size_t out_len, out_width, out_height;
-  size_t fb_len = 0;
-  fb_len = fb->len;
-  res = httpd_resp_send(req, (const char *)fb->buf, fb->len);
-  esp_camera_fb_return(fb);
-  xSemaphoreGive( baton );
-  return res;
-}
