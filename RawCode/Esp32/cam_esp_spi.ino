@@ -85,7 +85,6 @@ uint8_t buf[BUFFSIZE];
 
 static int i = 0;
 uint8_t temp = 0, temp_last = 0;
-unsigned long fileposition = 0;
 uint16_t frame_cnt = 0;
 uint16_t remnant = 0;
 uint32_t length = 0;
@@ -115,12 +114,12 @@ int recording = 0;          // turned off until start of setup
 int framesize = 6;          // vga
 int repeat = 100;           // capture 100 videos
 int quality = 10;
-int xspeed = 1;
+int xspeed = 1;            //Record in real time 
 int xlength = 3;
-int gray = 0;
+int gray = 0;             //for color recording
 int new_config = 0;
 
-#define AVIOFFSET 240 // AVI main header length
+
 
 unsigned long movi_size = 0;
 unsigned long jpeg_size = 0;
@@ -144,7 +143,7 @@ uint8_t uxga_h[2] = {0xB0, 0x04}; // 1200
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// AviWriterTask runs on cpu 1 to write the avi file
+// AviWriterTask runs on cpu 1 to write camera data to spi
 //
 
 TaskHandle_t CameraTask, AviWriterTask;
@@ -157,7 +156,7 @@ void codeForAviWriterTask( void * parameter )
   print_stats("AviWriterTask runs on Core: ");
 
   for (;;) {
-    make_avi();
+    make_avi();    //sends data to spi
     delay(1);
   }
 }
@@ -174,16 +173,16 @@ void codeForCameraTask( void * parameter )
 
   for (;;) {
 
-    if (other_cpu_active == 1 ) {
+    if (other_cpu_active == 1 ) {     //only functional when SPI is ready to receive
       current_millis = millis();
-      if (current_millis - last_capture_millis > capture_interval) {
+      if (current_millis - last_capture_millis > capture_interval) {  //if total capture time is not yet achieved
 
-        last_capture_millis = millis();
+        last_capture_millis = millis();   //A frame is captured at this time
 
-        xSemaphoreTake( baton, portMAX_DELAY ); 
+        xSemaphoreTake( baton, portMAX_DELAY ); //lock system resources(memory address) used below
 
-        if  ( ( (fb_in + fb_max - fb_out) % fb_max) + 1 == fb_max ) {
-          xSemaphoreGive( baton );
+        if  ( ( (fb_in + fb_max - fb_out) % fb_max) + 1 == fb_max ) { //waits for queue to fill up
+          xSemaphoreGive( baton );    //release system resources (memory address) used above
 
           Serial.print(" S ");  // the queue is full
           skipped++;
@@ -193,7 +192,7 @@ void codeForCameraTask( void * parameter )
           //Serial.print(fb_in); Serial.print(" / "); Serial.print(fb_out); Serial.print(" / "); Serial.println(fb_max);
           //delay(1);
 
-        } if (skipping > 0 ) {
+        } if (skipping > 0 ) {    
 
           if (skipping % 2 == 0) {  // skip every other frame until queue is cleared
 
@@ -217,7 +216,7 @@ void codeForCameraTask( void * parameter )
 
           xSemaphoreGive( baton );
 
-        } else {
+        } else {               //Where the initial recording takes place
 
           skipping = 0;
           frames_so_far = frames_so_far + 1;
@@ -226,7 +225,7 @@ void codeForCameraTask( void * parameter )
           fb_in = (fb_in + 1) % fb_max;
           bp = millis();
           fb_q[fb_in] = esp_camera_fb_get();
-          totalp = totalp - bp + millis();
+          totalp = totalp - bp + millis(); //( millis() - bp + totalp ) = time elapsed 
           xSemaphoreGive( baton );
 
         }
@@ -328,7 +327,7 @@ void setup() {
   framesize = 10;  // uxga
   repeat = 100;    // 100 files
   xspeed = 30;     // 30x playback speed
-  gray = 0;        // not gray
+  gray = 0;        // not gray but color
   quality = 10;    // 10 on the 0..64 scale, or 10..50 subscale
   capture_interval = 1000; // 1000 ms or 1 second
   total_frames = 1800;     // 1800 frames or 60 x 30 = 30 minutes
