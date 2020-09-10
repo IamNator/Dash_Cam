@@ -192,7 +192,7 @@ void codeForCameraTask( void * parameter )
           //Serial.print(fb_in); Serial.print(" / "); Serial.print(fb_out); Serial.print(" / "); Serial.println(fb_max);
           //delay(1);
 
-        } if (skipping > 0 ) {    
+        } if (skipping > 0 ) {
 
           if (skipping % 2 == 0) {  // skip every other frame until queue is cleared
 
@@ -262,7 +262,8 @@ static const int spiClk = 1000000; // 1 MHz
 SPIClass * hspi = NULL;
 
 
-#define stat_led 33
+#define stat_led 33  //status indicator
+#define hspi_ss  15  //HSPI SS
 
 
 void setup() {
@@ -346,22 +347,19 @@ void setup() {
   recording = 1;  // we are recording
 
 
-  Serial.print("Camera Ready! Use 'http://");
+  Serial.print("Camera Ready! Use ");
 
 
-  //initialise two instances of the SPIClass attached to VSPI and HSPI respectively
- // vspi = new SPIClass(VSPI);
+  //initialise one instances of the SPIClass attached to VSPI and HSPI respectively
   hspi = new SPIClass(HSPI);
   
   //initialise hspi with default pins
   //SCLK = 14, MISO = 12, MOSI = 13, SS = 15
   hspi->begin(); 
-  //alternatively route through GPIO pins
-  //hspi->begin(25, 26, 27, 32); //SCLK, MISO, MOSI, SS
 
   //set up slave select pins as outputs as the Arduino API
   //doesn't handle automatically pulling SS low
-  pinMode(15, OUTPUT); //HSPI SS
+  pinMode(hspi_ss, OUTPUT); //HSPI SS
 
 }
 
@@ -561,6 +559,7 @@ static esp_err_t config_camera() {
     delay(500);
   }
 
+
   sensor_t * ss = esp_camera_sensor_get();
   ss->set_quality(ss, quality);
   ss->set_framesize(ss, (framesize_t)framesize);
@@ -576,8 +575,23 @@ static esp_err_t config_camera() {
     do_fb();  // start the camera ... warm it up
     delay(20);
   }
-
 }
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+//  do_fb - just takes a picture and discards it
+//
+static esp_err_t do_fb() {
+  xSemaphoreTake( baton, portMAX_DELAY );
+  camera_fb_t * fb = esp_camera_fb_get();
+
+  Serial.print("Pic, len="); Serial.println(fb->len);
+
+  esp_camera_fb_return(fb);
+  xSemaphoreGive( baton );
+}
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
@@ -595,72 +609,6 @@ static esp_err_t start_avi() {
 
   strftime(strftime_buf, sizeof(strftime_buf), "%F_%H.%M.%S", &timeinfo);
 
-  
-
-  if (idxfile != NULL)  {
-
-    //Serial.printf("File open: %s\n", "/sdcard/idx.tmp");
-
-  }  else  {
-    Serial.println("Could not open file");
-    major_fail();
-  }
-
-
-  for ( i = 0; i < AVIOFFSET; i++)
-  {
-    char ch = pgm_read_byte(&avi_header[i]);
-    buf[i] = ch;
-  }
-
-  size_t err = fwrite(buf, 1, AVIOFFSET, avifile);
-
-  if (framesize == 6) {
-
-    fseek(avifile, 0x40, SEEK_SET);
-    err = fwrite(vga_w, 1, 2, avifile);
-    fseek(avifile, 0xA8, SEEK_SET);
-    err = fwrite(vga_w, 1, 2, avifile);
-    fseek(avifile, 0x44, SEEK_SET);
-    err = fwrite(vga_h, 1, 2, avifile);
-    fseek(avifile, 0xAC, SEEK_SET);
-    err = fwrite(vga_h, 1, 2, avifile);
-
-  } else if (framesize == 10) {
-
-    fseek(avifile, 0x40, SEEK_SET);
-    err = fwrite(uxga_w, 1, 2, avifile);
-    fseek(avifile, 0xA8, SEEK_SET);
-    err = fwrite(uxga_w, 1, 2, avifile);
-    fseek(avifile, 0x44, SEEK_SET);
-    err = fwrite(uxga_h, 1, 2, avifile);
-    fseek(avifile, 0xAC, SEEK_SET);
-    err = fwrite(uxga_h, 1, 2, avifile);
-
-  } else if (framesize == 7) {
-
-    fseek(avifile, 0x40, SEEK_SET);
-    err = fwrite(svga_w, 1, 2, avifile);
-    fseek(avifile, 0xA8, SEEK_SET);
-    err = fwrite(svga_w, 1, 2, avifile);
-    fseek(avifile, 0x44, SEEK_SET);
-    err = fwrite(svga_h, 1, 2, avifile);
-    fseek(avifile, 0xAC, SEEK_SET);
-    err = fwrite(svga_h, 1, 2, avifile);
-
-  }  else if (framesize == 5) {
-
-    fseek(avifile, 0x40, SEEK_SET);
-    err = fwrite(cif_w, 1, 2, avifile);
-    fseek(avifile, 0xA8, SEEK_SET);
-    err = fwrite(cif_w, 1, 2, avifile);
-    fseek(avifile, 0x44, SEEK_SET);
-    err = fwrite(cif_h, 1, 2, avifile);
-    fseek(avifile, 0xAC, SEEK_SET);
-    err = fwrite(cif_h, 1, 2, avifile);
-  }
-
-  fseek(avifile, AVIOFFSET, SEEK_SET);
 
   Serial.print(F("\nRecording "));
   Serial.print(total_frames);
@@ -740,8 +688,6 @@ static esp_err_t another_save_avi() {
 
     remnant = (4 - (jpeg_size & 0x00000003)) & 0x00000003;
 
-    print_quartet(idx_offset, idxfile);
-    print_quartet(jpeg_size, idxfile);
 
     idx_offset = idx_offset + jpeg_size + remnant + 8;
 
@@ -806,31 +752,6 @@ static esp_err_t end_avi() {
   uint32_t us_per_frame = round(fmicroseconds_per_frame);
 
 
-  //Modify the MJPEG header from the beginning of the file, overwriting various placeholders
-
-  fseek(avifile, 4 , SEEK_SET);
-  print_quartet(movi_size + 240 + 16 * frame_cnt + 8 * frame_cnt, avifile);
-
-  fseek(avifile, 0x20 , SEEK_SET);
-  print_quartet(us_per_frame, avifile);
-
-  unsigned long max_bytes_per_sec = movi_size * iAttainedFPS / frame_cnt;
-
-  fseek(avifile, 0x24 , SEEK_SET);
-  print_quartet(max_bytes_per_sec, avifile);
-
-  fseek(avifile, 0x30 , SEEK_SET);
-  print_quartet(frame_cnt, avifile);
-
-  fseek(avifile, 0x8c , SEEK_SET);
-  print_quartet(frame_cnt, avifile);
-
-  fseek(avifile, 0x84 , SEEK_SET);
-  print_quartet((int)iAttainedFPS, avifile);
-
-  fseek(avifile, 0xe8 , SEEK_SET);
-  print_quartet(movi_size + frame_cnt * 8 + 4, avifile);
-
   Serial.println(F("\n*** Video recorded and saved ***\n"));
   Serial.print(F("Recorded "));
   Serial.print(elapsedms / 1000);
@@ -849,74 +770,13 @@ static esp_err_t end_avi() {
   Serial.print("Frames Skipped % ");  Serial.println( 100.0 * skipped / frame_cnt, 1 );
 
   Serial.println("Writing the index");
-
-  fseek(avifile, current_end, SEEK_SET);
-
-  fclose(idxfile);
-
-  size_t i1_err = fwrite(idx1_buf, 1, 4, avifile);
-
-  print_quartet(frame_cnt * 16, avifile);
-
-  idxfile = fopen("/sdcard/idx.tmp", "r");
-
-  if (idxfile != NULL)  {
-
-    //Serial.printf("File open: %s\n", "/sdcard/idx.tmp");
-
-  }  else  {
-    Serial.println("Could not open file");
-    //major_fail();
-  }
-
-  char * AteBytes;
-  AteBytes = (char*) malloc (8);
-
-  for (int i = 0; i < frame_cnt; i++) {
-
-    size_t res = fread ( AteBytes, 1, 8, idxfile);
-    size_t i1_err = fwrite(dc_buf, 1, 4, avifile);
-    size_t i2_err = fwrite(zero_buf, 1, 4, avifile);
-    size_t i3_err = fwrite(AteBytes, 1, 8, avifile);
-
-  }
-
-  free(AteBytes);
-
-  fclose(idxfile);
-  fclose(avifile);
-
+  
   Serial.println("---");
   //WiFi.printDiag(Serial);
 
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//
-//  do_fb - just takes a picture and discards it
-//
-
-static esp_err_t do_fb() {
-  xSemaphoreTake( baton, portMAX_DELAY );
-  camera_fb_t * fb = esp_camera_fb_get();
-
-  Serial.print("Pic, len="); Serial.println(fb->len);
-
-  esp_camera_fb_return(fb);
-  xSemaphoreGive( baton );
-}
-
-void do_time() {
-
-  int numberOfNetworks = WiFi.scanNetworks();
-
-  Serial.print("Number of networks found: ");
-  Serial.println(numberOfNetworks);
-
-}
-
-////////////////////////////////////////////////////////////////////////////////////
-//
 // some globals for the loop()
 //
 
