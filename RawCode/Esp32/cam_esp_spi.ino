@@ -658,7 +658,7 @@ static esp_err_t another_save_avi() {
     //Serial.print(millis()); Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
     //}
 
-    fb_out = (fb_out + 1) % fb_max;
+    fb_out = (fb_out + 1) % fb_max; //increments the fb_out by one
 
     int fblen;
     fblen = fb_q[fb_out]->len;
@@ -686,7 +686,7 @@ static esp_err_t another_save_avi() {
     esp_camera_fb_return(fb_q[fb_out]);     // release that buffer back to the camera system
     xSemaphoreGive( baton );
 
-    remnant = (4 - (jpeg_size & 0x00000003)) & 0x00000003;
+    remnant = (4 - (jpeg_size & 0x00000003)) & 0x00000003; 
 
 
     idx_offset = idx_offset + jpeg_size + remnant + 8;
@@ -759,7 +759,7 @@ static esp_err_t end_avi() {
   Serial.print(frame_cnt);
   Serial.print(F(" frames\nFile size is "));
   Serial.print(movi_size + 12 * frame_cnt + 4);
-  Serial.print(F(" bytes\nActual FPS is "));
+   Serial.print(F(" bytes\nActual FPS is "));
   Serial.print(fRealFPS, 2);
   Serial.print(F("\nMax data rate is "));
   Serial.print(max_bytes_per_sec);
