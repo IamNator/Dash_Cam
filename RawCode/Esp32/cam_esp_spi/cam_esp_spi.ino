@@ -39,7 +39,7 @@ bool internet_connected = false;
 struct tm timeinfo;
 time_t now;
 
-
+int newVideo = 0; ///just added this one
 char *filename ;
 char *stream ;
 int newfile = 0;
@@ -601,12 +601,12 @@ void stm32Write(uint8_t * buffer, int len){
     hspi->transfer(buffer, len); //spi reads and write to thesame buffer
 
     digitalWrite(hspi_ss, HIGH);
-    hspi->endTransaction()
+    hspi->endTransaction();
 
-    if (fb_q[fb_out]->buf == "err" ) {
-      Serial.println("Error on spi write");
-      major_fail();
-    }
+    // if (fb_q[fb_out]->buf == "err" ) {
+    //   Serial.println("Error on spi write");
+    //   major_fail();
+    // }
 
 }
 
@@ -747,6 +747,8 @@ static esp_err_t end_avi() {
   uint8_t iAttainedFPS = round(fRealFPS);
   uint32_t us_per_frame = round(fmicroseconds_per_frame);
 
+  unsigned long max_bytes_per_sec = movi_size * iAttainedFPS / frame_cnt;
+
 
   Serial.println(F("\n*** Video recorded and saved ***\n"));
   Serial.print(F("Recorded "));
@@ -760,7 +762,7 @@ static esp_err_t end_avi() {
   Serial.print(F("\nMax data rate is "));
   Serial.print(max_bytes_per_sec);
   Serial.print(F(" byte/s\nFrame duration is "));  Serial.print(us_per_frame);  Serial.println(F(" us"));
-  Serial.print(F("Average frame length is "));  Serial.print(uVideoLen / frame_cnt);  Serial.println(F(" bytes");
+  Serial.print(F("Average frame length is "));  Serial.print(uVideoLen / frame_cnt);  Serial.println(F(" bytes"));
   Serial.print("Average picture time (ms) "); Serial.println( totalp / frame_cnt );
   Serial.print("Average write time (ms) "); Serial.println( totalw / frame_cnt );
   Serial.print("Frames Skipped % ");  Serial.println( 100.0 * skipped / frame_cnt, 1 );
