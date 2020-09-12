@@ -39,12 +39,12 @@ bool internet_connected = false;
 struct tm timeinfo;
 time_t now;
 
+
 char *filename ;
 char *stream ;
 int newfile = 0;
 int frames_so_far = 0;
-
-
+FILE *myfile;
 long bp;
 long ap;
 long bw;
@@ -241,8 +241,7 @@ void codeForCameraTask( void * parameter )
   }
 }
 
-
-
+//
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
@@ -252,8 +251,7 @@ void codeForCameraTask( void * parameter )
 //
 
 
-
-//For SPI communication
+//For SPI communication.
 #include <SPI.h>
 static const int spiClk = 1000000; // 1 MHz
 
@@ -355,7 +353,7 @@ void setup() {
   //initialise hspi with default pins
   //SCLK = 14, MISO = 12, MOSI = 13, SS = 15
   hspi->begin(); 
-  hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
+  //hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
   //SPI_MODE0 -- CPOL-0 CPHA - 0
   //set up slave select pins as outputs as the Arduino API
   //doesn't handle automatically pulling SS low
@@ -611,8 +609,7 @@ static esp_err_t start_avi() {
   
 //sent to inform stm32 that recording has started
   char start_of_recording[20] = {0x73, 0x74, 0x61, 0x72, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
-  stm32Write(&start_of_frame, strlen(start_of_recording));
-
+  stm32Write((uint8_t *)start_of_recording, strlen(start_of_recording));
 
   Serial.print(F("\nRecording "));
   Serial.print(total_frames);
@@ -702,7 +699,7 @@ static esp_err_t another_save_avi() {
 
     //sent to inform stm32 that recording stopped;
     char end_of_frame[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x66, 0x72, 0x61, 0x6d, 0x65};
-    stm32Write(&end_of_frame, strlen(end_of_frame));
+    stm32Write((uint8_t *)end_of_frame, strlen(end_of_frame));
 
     //xSemaphoreTake( baton, portMAX_DELAY );
     esp_camera_fb_return(fb_q[fb_out]);// release that buffer back to the camera system
@@ -738,7 +735,7 @@ static esp_err_t end_avi() {
 
   //sent to inform stm32 that recording stopped;
   char end_of_recording[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
-  stm32Write(&end_of_recording, strlen(end_of_recording));
+  stm32Write((uint8_t *)end_of_recording, strlen(end_of_recording));
 
 
   Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
@@ -794,7 +791,3 @@ void loop()
   delay(10);
 
 }
-
-
-
-
