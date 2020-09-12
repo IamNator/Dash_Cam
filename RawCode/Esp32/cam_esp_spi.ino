@@ -725,14 +725,19 @@ static esp_err_t another_save_avi() {
 //
 //  end_avi runs on cpu 1, empties the queue of frames, writes the index, and closes the files
 //hspiTransfer(&fb_q[fb_out]->buf,fb_q[fb_out]->len)
-size_t hspiTransfer(camera_fb_t * buf, uint16_t buf_len){
+size_t hspiTransfer(camera_fb_t * buf, uint16_t buf_len){//passsed by reference to save time
+
+ hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
  
  int i = 0;
  while(i<buf_len){
+   digitalWrite(hspi_ss, LOW);
    hspi->transfer(*buf[i]);
+   digitalWrite(hspi_ss, HIGH);
+   hspi->endTransaction();
    ++i;
  }
-  
+ 
   return err;
 }
 //

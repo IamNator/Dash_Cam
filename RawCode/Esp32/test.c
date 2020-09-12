@@ -1,5 +1,10 @@
 #include <stdio.h>
 
+void printfPtr(int * num){
+   printf("%d",*num);
+}
+
+
 int main (){
    
  int * numptr;
@@ -10,6 +15,3 @@ int main (){
    return(0);
 }  
 
-void printfPtr(int * num){
-   printf("%d",*num);
-}
