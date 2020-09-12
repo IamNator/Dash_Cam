@@ -116,22 +116,12 @@ int quality = 10;
 int xspeed = 1;            //Record in real time 
 int xlength = 3;
 int gray = 0;             //for color recording
-int new_config = 0;
+int new_config = 3;       //3 for VGA
 
 
 
 unsigned long movi_size = 0;
 unsigned long jpeg_size = 0;
-
-uint8_t  vga_w[2] = {0x80, 0x02}; // 640
-uint8_t  vga_h[2] = {0xE0, 0x01}; // 480
-uint8_t  cif_w[2] = {0x90, 0x01}; // 400
-uint8_t  cif_h[2] = {0x28, 0x01}; // 296
-uint8_t svga_w[2] = {0x20, 0x03}; //
-uint8_t svga_h[2] = {0x58, 0x02}; //
-uint8_t uxga_w[2] = {0x40, 0x06}; // 1600
-uint8_t uxga_h[2] = {0xB0, 0x04}; // 1200
-
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -309,17 +299,16 @@ void setup() {
   //  startup defaults -- EDIT HERE
   //  zzz
 
-  framesize = 10;  // uxga
+  framesize = 6;   // 6 vga, 10 uxga
   repeat = 100;    // 100 files
-  xspeed = 30;     // 30x playback speed
   gray = 0;        // not gray but color
   quality = 10;    // 10 on the 0..64 scale, or 10..50 subscale
-  capture_interval = 1000; // 1000 ms or 1 second
-  total_frames = 1800;     // 1800 frames or 60 x 30 = 30 minutes
+  capture_interval = 100; // 100ms - 10 FPS  // 1000 ms or 1 second
+  total_frames = 18000     // 18000 frames or 60 x 30 x 10fps = 30 minutes (FPS*capture_interval)
   xlength = total_frames * capture_interval / 1000;
 
 
-  new_config = 5;  // 5 means we have not configured the camera
+  new_config = 1;  // 5 means we have not configured the camera
                    // 1 setup as vga, 2 setup as uxga
                    // 3 move from uxga -> vga
                    // 4 move from vga -> uxga
@@ -412,7 +401,7 @@ void major_fail() {
 void make_avi( ) {
 
   // we are recording, but no file is open
-  if (newfile == 0 && recording == 1) {                                     // open the file
+  if (newfile == 0 && recording == 1) {                              // open the file
 
     digitalWrite(stat_led, HIGH);
     newfile = 1;
@@ -422,7 +411,7 @@ void make_avi( ) {
 
     // we have a file open, but not recording
 
-    if (newfile == 1 && recording == 0) {                                  // got command to close file
+    if (newfile == 1 && recording == 0) {                           // got command to close file
 
       digitalWrite(stat_led, LOW);
       end_avi();
@@ -454,8 +443,8 @@ void make_avi( ) {
           } else {
             recording = 0;
           }
-
-        } else if ((millis() - startms) > (total_frames * capture_interval)) {
+          
+        } else if ((millis() - startms) > (total_frames * capture_interval)) {//done for time interval recording
 
           Serial.println (" "); Serial.println("Done capture for time");
           Serial.print("Time Elapsed: "); Serial.print(millis() - startms); Serial.print(" Frames: "); Serial.println(frame_cnt);
@@ -592,11 +581,6 @@ void stm32Write(uint8_t * buffer, int len){
     digitalWrite(hspi_ss, HIGH);
     hspi->endTransaction();
 
-    // if (fb_q[fb_out]->buf == "err" ) {
-    //   Serial.println("Error on spi write");
-    //   major_fail();
-    // }
-
 }
 
 
@@ -612,7 +596,7 @@ static esp_err_t start_avi() {
   config_camera(); //impliments setting for camera
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//sent to inform stm32 that recording has started
+//sent (start of recording) to inform stm32 that recording has started
   char start_of_recording[20] = {0x73, 0x74, 0x61, 0x72, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
   stm32Write((uint8_t *)start_of_recording, strlen(start_of_recording));
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -677,7 +661,9 @@ static esp_err_t another_save_avi() {
     movi_size += jpeg_size;
     uVideoLen += jpeg_size;
 
-    bw = millis();
+    bw = millis(); //before write
+
+
    
     //Forwarding data to STM32 here
     stm32Write(fb_q[fb_out]->buf, fb_q[fb_out]->len);
@@ -686,12 +672,15 @@ static esp_err_t another_save_avi() {
     char end_of_frame[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x66, 0x72, 0x61, 0x6d, 0x65};
     stm32Write((uint8_t *)end_of_frame, strlen(end_of_frame));
 
+
+
+
     //xSemaphoreTake( baton, portMAX_DELAY );
     esp_camera_fb_return(fb_q[fb_out]);// release that buffer back to the camera system
     xSemaphoreGive( baton );
 
 
-    totalw = totalw + millis() - bw;
+    totalw = totalw + millis() - bw;    //total write time
 
     //if (((fb_in + fb_max - fb_out) % fb_max) > 0 ) {
     //  Serial.print(((fb_in + fb_max - fb_out) % fb_max)); Serial.print(" ");
@@ -717,6 +706,7 @@ static esp_err_t end_avi() {
   for (int i = 0; i < fb_max; i++) {           // clear the queue
     another_save_avi();
   }
+
 
   //sent("end of recording") to inform stm32 that recording stopped;
   char end_of_recording[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};

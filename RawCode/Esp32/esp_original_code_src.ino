@@ -288,9 +288,9 @@ void codeForCameraTask( void * parameter )
           frame_cnt++;
 
           fb_in = (fb_in + 1) % fb_max;
-          bp = millis();
+          bp = millis();                       //before picture
           fb_q[fb_in] = esp_camera_fb_get();
-          totalp = totalp - bp + millis();
+          totalp = totalp - bp + millis();     //total picture taking time
           xSemaphoreGive( baton );
 
         }
