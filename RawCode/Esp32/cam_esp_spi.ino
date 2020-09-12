@@ -355,7 +355,8 @@ void setup() {
   //initialise hspi with default pins
   //SCLK = 14, MISO = 12, MOSI = 13, SS = 15
   hspi->begin(); 
-
+  hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
+  //SPI_MODE0 -- CPOL-0 CPHA - 0
   //set up slave select pins as outputs as the Arduino API
   //doesn't handle automatically pulling SS low
   pinMode(hspi_ss, OUTPUT); //HSPI SS
@@ -607,6 +608,10 @@ static esp_err_t start_avi() {
   localtime_r(&now, &timeinfo);
 
   strftime(strftime_buf, sizeof(strftime_buf), "%F_%H.%M.%S", &timeinfo);
+  
+//sent to inform stm32 that recording has started
+  char start_of_recording[20] = {0x73, 0x74, 0x61, 0x72, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
+  stm32Write(&start_of_frame, strlen(start_of_recording));
 
 
   Serial.print(F("\nRecording "));
@@ -636,6 +641,27 @@ static esp_err_t start_avi() {
 
 } // end of start avi
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//foward data to STM32
+stm32Write(uint8_t * buffer, int len){
+    
+    hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
+    digitalWrite(hspi_ss, LOW);
+
+    hspi->transfer(buffer, len); //spi reads and write to thesame buffer
+
+    digitalWrite(hspi_ss, HIGH);
+    hspi->endTransaction()
+
+    if (fb_q[fb_out]->buf == "err" ) {
+      Serial.println("Error on spi write");
+      major_fail();
+    }
+
+}
+
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 //  another_save_avi runs on cpu 1, saves another frame to the avi file
@@ -654,7 +680,7 @@ static esp_err_t another_save_avi() {
   } else {
 
     //if ( (fb_in + fb_max - fb_out) % fb_max > 3) {  // more than 1 in queue ??
-    //Serial.print(millis()); Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
+    //Serial.print(millis()); Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max);Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
     //}
 
     fb_out = (fb_out + 1) % fb_max; //increments the fb_out by one
@@ -663,7 +689,6 @@ static esp_err_t another_save_avi() {
     fblen = fb_q[fb_out]->len;
 
     //xSemaphoreGive( baton );
-
     digitalWrite(stat_led, LOW);
 
     jpeg_size = fblen;
@@ -672,45 +697,18 @@ static esp_err_t another_save_avi() {
 
     bw = millis();
    
-    //bw = millis();
+    //Forwarding data to STM32 here
+    stm32Write(fb_q[fb_out]->buf, fb_q[fb_out]->len);
 
-    size_t err = hspiTransfer(fb_q[fb_out]->buf, 1, fb_q[fb_out]->len);
-    if (err == 0 ) {
-      Serial.println("Error on avi write");
-      major_fail();
-    }
-
+    //sent to inform stm32 that recording stopped;
+    char end_of_frame[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x66, 0x72, 0x61, 0x6d, 0x65};
+    stm32Write(&end_of_frame, strlen(end_of_frame));
 
     //xSemaphoreTake( baton, portMAX_DELAY );
     esp_camera_fb_return(fb_q[fb_out]);// release that buffer back to the camera system
     xSemaphoreGive( baton );
 
-    remnant = (4 - (jpeg_size & 0x00000003)) & 0x00000003;
 
-
-    idx_offset = idx_offset + jpeg_size + remnant + 8;
-
-    jpeg_size = jpeg_size + remnant;
-    movi_size = movi_size + remnant;
-    if (remnant > 0) {
-      size_t rem_err = fwrite(zero_buf, 1, remnant, avifile);
-    }
-
-    fileposition = ftell (avifile);// Here, we are at end of chunk (after padding)
-    fseek(avifile, fileposition - jpeg_size - 4, SEEK_SET);// Here we are the the 4-bytes blank placeholder
-
-    print_quartet(jpeg_size, avifile);// Overwrite placeholder with actual frame size (without padding)
-
-    fileposition = ftell (avifile);
-
-    fseek(avifile, fileposition + 6, SEEK_SET);// Here is the FOURCC "JFIF" (JPEG header)
-    //Overwrite "JFIF" (still images) with more appropriate "AVI1"
-
-    size_t av_err = fwrite(avi1_buf, 1, 4, avifile);
-
-    fileposition = ftell (avifile);
-    fseek(avifile, fileposition + jpeg_size - 10, SEEK_SET);
-    //Serial.println("Write done");
     totalw = totalw + millis() - bw;
 
     //if (((fb_in + fb_max - fb_out) % fb_max) > 0 ) {
@@ -724,39 +722,26 @@ static esp_err_t another_save_avi() {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 //  end_avi runs on cpu 1, empties the queue of frames, writes the index, and closes the files
-//hspiTransfer(&fb_q[fb_out]->buf,fb_q[fb_out]->len)
-size_t hspiTransfer(camera_fb_t * buf, uint16_t buf_len){//passsed by reference to save time
 
- hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
  
- int i = 0;
- while(i<buf_len){
-   digitalWrite(hspi_ss, LOW);
-   hspi->transfer(*buf[i]);
-   digitalWrite(hspi_ss, HIGH);
-   hspi->endTransaction();
-   ++i;
- }
- 
-  return err;
-}
-//
-
 static esp_err_t end_avi() {
 
   unsigned long current_end = 0;
 
   other_cpu_active = 0;
 
-  Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
+  Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out); 
 
   for (int i = 0; i < fb_max; i++) {           // clear the queue
     another_save_avi();
   }
 
-  Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
+  //sent to inform stm32 that recording stopped;
+  char end_of_recording[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
+  stm32Write(&end_of_recording, strlen(end_of_recording));
 
-  current_end = ftell (avifile);
+
+  Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
 
   Serial.println("End of avi - closing the files");
 
@@ -784,8 +769,6 @@ static esp_err_t end_avi() {
   Serial.print("Average write time (ms) "); Serial.println( totalw / frame_cnt );
   Serial.print("Frames Skipped % ");  Serial.println( 100.0 * skipped / frame_cnt, 1 );
 
-  Serial.println("Writing the index");
-  
   Serial.println("---");
 
 }

@@ -1,16 +1,16 @@
 #include <stdio.h>
+#include <string.h>
 
-void printfPtr(int * num){
-   printf("%d",*num);
-}
 
 
 int main (){
+  
+  char stringd[19] = {0x73, 0x74, 0x61, 0x72, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
+
+  unsigned int * str = (unsigned int *)stringd;
+
    
- int * numptr;
- int number = 5;
- numptr = &number;
- printfPtr(numptr);
+ printf(" %s  %d ", stringd, strlen(stringd));
    
    return(0);
 }  
