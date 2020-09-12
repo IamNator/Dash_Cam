@@ -39,7 +39,6 @@ bool internet_connected = false;
 struct tm timeinfo;
 time_t now;
 
-int newVideo = 0; ///just added this one
 char *filename ;
 char *stream ;
 int newfile = 0;
@@ -241,9 +240,7 @@ void codeForCameraTask( void * parameter )
   }
 }
 
-//
-#include "soc/soc.h"
-#include "soc/rtc_cntl_reg.h"
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
@@ -256,7 +253,6 @@ void codeForCameraTask( void * parameter )
 static const int spiClk = 1000000; // 1 MHz
 
 //uninitalised pointers to SPI objects
-//SPIClass * vspi = NULL;
 SPIClass * hspi = NULL;
 
 
@@ -423,10 +419,10 @@ void major_fail() {
 void make_avi( ) {
 
   // we are recording, but no file is open
-  if (newVideo == 0 && recording == 1) {                                     // open the file
+  if (newfile == 0 && recording == 1) {                                     // open the file
 
     digitalWrite(stat_led, HIGH);
-    newVideo = 1;
+    newfile = 1;
     start_avi();
 
   } else {
@@ -762,7 +758,7 @@ static esp_err_t end_avi() {
   Serial.print(F("\nMax data rate is "));
   Serial.print(max_bytes_per_sec);
   Serial.print(F(" byte/s\nFrame duration is "));  Serial.print(us_per_frame);  Serial.println(F(" us"));
-  Serial.print(F("Average frame length is "));  Serial.print(uVideoLen / frame_cnt);  Serial.println(F(" bytes"));
+  Serial.print(F("Average frame length is "));  Serial.print(uVideoLen / frame_cnt); Serial.println(F(" bytes"));
   Serial.print("Average picture time (ms) "); Serial.println( totalp / frame_cnt );
   Serial.print("Average write time (ms) "); Serial.println( totalw / frame_cnt );
   Serial.print("Frames Skipped % ");  Serial.println( 100.0 * skipped / frame_cnt, 1 );
