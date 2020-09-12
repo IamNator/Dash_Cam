@@ -591,6 +591,26 @@ static esp_err_t do_fb() {
 }
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//foward data to STM32
+void stm32Write(uint8_t * buffer, int len){
+    
+    hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
+    digitalWrite(hspi_ss, LOW);
+
+    hspi->transfer(buffer, len); //spi reads and write to thesame buffer
+
+    digitalWrite(hspi_ss, HIGH);
+    hspi->endTransaction()
+
+    if (fb_q[fb_out]->buf == "err" ) {
+      Serial.println("Error on spi write");
+      major_fail();
+    }
+
+}
+
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 // start_avi - open the files and write in headers
@@ -637,27 +657,6 @@ static esp_err_t start_avi() {
   other_cpu_active = 1;
 
 } // end of start avi
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//foward data to STM32
-stm32Write(uint8_t * buffer, int len){
-    
-    hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
-    digitalWrite(hspi_ss, LOW);
-
-    hspi->transfer(buffer, len); //spi reads and write to thesame buffer
-
-    digitalWrite(hspi_ss, HIGH);
-    hspi->endTransaction()
-
-    if (fb_q[fb_out]->buf == "err" ) {
-      Serial.println("Error on spi write");
-      major_fail();
-    }
-
-}
-
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
