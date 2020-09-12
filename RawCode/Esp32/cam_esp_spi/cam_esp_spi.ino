@@ -122,12 +122,6 @@ int new_config = 0;
 
 unsigned long movi_size = 0;
 unsigned long jpeg_size = 0;
-unsigned long idx_offset = 0;
-
-uint8_t zero_buf[4] = {0x00, 0x00, 0x00, 0x00};
-uint8_t   dc_buf[4] = {0x30, 0x30, 0x64, 0x63};    // "00dc"
-uint8_t avi1_buf[4] = {0x41, 0x56, 0x49, 0x31};    // "AVI1"
-uint8_t idx1_buf[4] = {0x69, 0x64, 0x78, 0x31};    // "idx1"
 
 uint8_t  vga_w[2] = {0x80, 0x02}; // 640
 uint8_t  vga_h[2] = {0xE0, 0x01}; // 480
@@ -224,11 +218,10 @@ void codeForCameraTask( void * parameter )
           fb_in = (fb_in + 1) % fb_max;
           bp = millis();
           fb_q[fb_in] = esp_camera_fb_get();
-          totalp = totalp - bp + millis(); //( millis() - bp + totalp ) = time elapsed 
+          totalp = totalp - bp + millis(); //( millis() - bp + totalp ) = time elapsed
           xSemaphoreGive( baton );
 
         }
-
 
       } else {
         //delay(5);     // waiting to take next picture
@@ -241,7 +234,6 @@ void codeForCameraTask( void * parameter )
 }
 
 
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 // setup() runs on cpu 1
@@ -250,7 +242,7 @@ void codeForCameraTask( void * parameter )
 
 //For SPI communication.
 #include <SPI.h>
-static const int spiClk = 1000000; // 1 MHz
+static const int spiClk = 10000000; // 10 MHz
 
 //uninitalised pointers to SPI objects
 SPIClass * hspi = NULL;
@@ -311,11 +303,10 @@ void setup() {
   print_stats("After Server init Core: ");
 
   // zzz username and password for ftp server
-
   print_stats("After ftp init Core: ");
 
   //
-  //  startup defaults  -- EDIT HERE
+  //  startup defaults -- EDIT HERE
   //  zzz
 
   framesize = 10;  // uxga
@@ -327,13 +318,15 @@ void setup() {
   total_frames = 1800;     // 1800 frames or 60 x 30 = 30 minutes
   xlength = total_frames * capture_interval / 1000;
 
-  new_config = 3;  // 5 means we have not configured the camera
+
+  new_config = 5;  // 5 means we have not configured the camera
                    // 1 setup as vga, 2 setup as uxga
                    // 3 move from uxga -> vga
                    // 4 move from vga -> uxga
 
   newfile = 0;    // no file is open  // don't fiddle with this!
   recording = 0;  // we are NOT recording
+
 
   config_camera();
 
@@ -345,15 +338,15 @@ void setup() {
 
   //initialise one instances of the SPIClass attached to VSPI and HSPI respectively
   hspi = new SPIClass(HSPI);
-  
   //initialise hspi with default pins
   //SCLK = 14, MISO = 12, MOSI = 13, SS = 15
-  hspi->begin(); 
+  hspi->begin();
   //hspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
   //SPI_MODE0 -- CPOL-0 CPHA - 0
   //set up slave select pins as outputs as the Arduino API
   //doesn't handle automatically pulling SS low
   pinMode(hspi_ss, OUTPUT); //HSPI SS
+  digitalWrite(hspi_ss, HIGH);
 
 }
 
@@ -410,9 +403,9 @@ void major_fail() {
 // Make the avi move in 4 pieces
 //
 // make_avi() called in every loop, which calls below, depending on conditions
-//   start_avi() - open the file and write headers
-//   another_pic_avi() - write one more frame of movie
-//   end_avi() - write the final parameters and close the file
+// start_avi() - open the file and write headers
+// another_pic_avi() - write one more frame of movie
+// end_avi() - write the final parameters and close the file
 
 
 
@@ -616,17 +609,15 @@ static esp_err_t start_avi() {
 
   Serial.println("Starting an avi ");
 
-  config_camera();
+  config_camera(); //impliments setting for camera
 
-  time(&now);
-  localtime_r(&now, &timeinfo);
-
-  strftime(strftime_buf, sizeof(strftime_buf), "%F_%H.%M.%S", &timeinfo);
-  
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //sent to inform stm32 that recording has started
   char start_of_recording[20] = {0x73, 0x74, 0x61, 0x72, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
   stm32Write((uint8_t *)start_of_recording, strlen(start_of_recording));
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+//serial.print(F("Hello World")) means the string is stored in FLASH memory and not in RAM
   Serial.print(F("\nRecording "));
   Serial.print(total_frames);
   Serial.println(F(" video frames ...\n"));
@@ -639,7 +630,6 @@ static esp_err_t start_avi() {
   jpeg_size = 0;
   movi_size = 0;
   uVideoLen = 0;
-  idx_offset = 4;
 
 
   frame_cnt = 0;
@@ -648,9 +638,9 @@ static esp_err_t start_avi() {
   skipping = 0;
   skipped = 0;
 
-  newfile = 1;
+  newfile = 1; //to start recording
 
-  other_cpu_active = 1;
+  other_cpu_active = 1; //to start data capture by camera
 
 } // end of start avi
 
@@ -692,7 +682,7 @@ static esp_err_t another_save_avi() {
     //Forwarding data to STM32 here
     stm32Write(fb_q[fb_out]->buf, fb_q[fb_out]->len);
 
-    //sent to inform stm32 that recording stopped;
+    //sent ("end of frame") to inform stm32 that recording stopped;
     char end_of_frame[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x66, 0x72, 0x61, 0x6d, 0x65};
     stm32Write((uint8_t *)end_of_frame, strlen(end_of_frame));
 
@@ -728,7 +718,7 @@ static esp_err_t end_avi() {
     another_save_avi();
   }
 
-  //sent to inform stm32 that recording stopped;
+  //sent("end of recording") to inform stm32 that recording stopped;
   char end_of_recording[21] = {0x65, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20, 0x72, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x67};
   stm32Write((uint8_t *)end_of_recording, strlen(end_of_recording));
 
@@ -737,6 +727,7 @@ static esp_err_t end_avi() {
 
   Serial.println("End of avi - closing the files");
 
+//1000.0f makes 1000.0 a float
   elapsedms = millis() - startms;
   float fRealFPS = (1000.0f * (float)frame_cnt) / ((float)elapsedms) * xspeed;
   float fmicroseconds_per_frame = 1000000.0f / fRealFPS;
@@ -788,3 +779,4 @@ void loop()
   delay(10);
 
 }
+
