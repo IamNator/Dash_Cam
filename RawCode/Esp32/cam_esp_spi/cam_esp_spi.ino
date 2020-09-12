@@ -79,7 +79,6 @@ int overtime_count = 0;
 // global variable used by these pieces
 
 char str[20];
-uint16_t n;
 uint8_t buf[BUFFSIZE];
 
 static int i = 0;
@@ -113,7 +112,7 @@ int recording = 0;          // turned off until start of setup
 int framesize = 6;          // vga
 int repeat = 100;           // capture 100 videos
 int quality = 10;
-int xspeed = 1;            //Record in real time 
+int xspeed = 1;             //Record in real time 
 int xlength = 3;
 int gray = 0;             //for color recording
 int new_config = 3;       //3 for VGA
@@ -300,7 +299,7 @@ void setup() {
   gray = 0;        // not gray but color
   quality = 10;    // 10 on the 0..64 scale, or 10..50 subscale
   capture_interval = 100; // 100ms - 10 FPS  // 1000 ms or 1 second
-  total_frames = 18000     // 18000 frames or 60 x 30 x 10fps = 30 minutes (FPS*capture_interval)
+  total_frames = 18000;     // 18000 frames or 60 x 30 x 10fps = 30 minutes (FPS*capture_interval)
   xlength = total_frames * capture_interval / 1000; //length of video in seconds
 
 
