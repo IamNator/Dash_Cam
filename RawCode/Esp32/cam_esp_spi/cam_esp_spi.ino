@@ -397,7 +397,6 @@ void major_fail() {
 // end_avi() - write the final parameters and close the file
 
 
-
 void make_avi( ) {
 
   // we are recording, but no file is open
@@ -410,7 +409,6 @@ void make_avi( ) {
   } else {
 
     // we have a file open, but not recording
-
     if (newfile == 1 && recording == 0) {                           // got command to close file
 
       digitalWrite(stat_led, LOW);
@@ -448,13 +446,13 @@ void make_avi( ) {
 
           Serial.println (" "); Serial.println("Done capture for time");
           Serial.print("Time Elapsed: "); Serial.print(millis() - startms); Serial.print(" Frames: "); Serial.println(frame_cnt);
-          Serial.print("Config:       "); Serial.print(total_frames * capture_interval ) ; Serial.print(" (");
+          Serial.print("Config:       "); Serial.print(total_frames * capture_interval ); Serial.print(" (");
           Serial.print(total_frames); Serial.print(" x "); Serial.print(capture_interval);  Serial.println(")");
 
           digitalWrite(stat_led, LOW);// close the file
-
+          
           end_avi();
-
+          
           frames_so_far = 0;
           newfile = 0;          // file is closed
           if (repeat > 0) {
@@ -473,6 +471,7 @@ void make_avi( ) {
     }
   }
 }
+
 
 static esp_err_t config_camera() {
 
@@ -508,7 +507,7 @@ static esp_err_t config_camera() {
       config.frame_size = FRAMESIZE_VGA;
       fb_max = 20;  // from 12
       new_config = 1;
-    } else {
+    } else {      
       config.frame_size = FRAMESIZE_UXGA;
       fb_max = 4;
       new_config = 2;
