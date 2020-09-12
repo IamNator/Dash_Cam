@@ -236,8 +236,6 @@ static const int spiClk = 10000000; // 10 MHz
 
 //uninitalised pointers to SPI objects
 SPIClass * hspi = NULL;
-
-
 #define stat_led 33  //status indicator
 #define hspi_ss  15  //HSPI SS
 
@@ -292,9 +290,7 @@ void setup() {
 
   print_stats("After Server init Core: ");
 
-  // zzz username and password for ftp server
-  print_stats("After ftp init Core: ");
-
+ 
   //
   //  startup defaults -- EDIT HERE
   //  zzz
@@ -305,10 +301,10 @@ void setup() {
   quality = 10;    // 10 on the 0..64 scale, or 10..50 subscale
   capture_interval = 100; // 100ms - 10 FPS  // 1000 ms or 1 second
   total_frames = 18000     // 18000 frames or 60 x 30 x 10fps = 30 minutes (FPS*capture_interval)
-  xlength = total_frames * capture_interval / 1000;
+  xlength = total_frames * capture_interval / 1000; //length of video in seconds
 
 
-  new_config = 1;  // 5 means we have not configured the camera
+  new_config = 3;  // 5 means we have not configured the camera
                    // 1 setup as vga, 2 setup as uxga
                    // 3 move from uxga -> vga
                    // 4 move from vga -> uxga
@@ -324,7 +320,8 @@ void setup() {
 
   Serial.print("Camera Ready! Use ");
 
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//  SPI communication
   //initialise one instances of the SPIClass attached to VSPI and HSPI respectively
   hspi = new SPIClass(HSPI);
   //initialise hspi with default pins
@@ -336,6 +333,7 @@ void setup() {
   //doesn't handle automatically pulling SS low
   pinMode(hspi_ss, OUTPUT); //HSPI SS
   digitalWrite(hspi_ss, HIGH);
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 }
 
