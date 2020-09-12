@@ -2,15 +2,14 @@
 
 int main (){
    
-   FILE *fp;
-   
-   fp = fopen("file.txt","w+");
-   fputs("This is tutorialspoint.com", fp);
-   
-   fseek( fp, 17, SEEK_SET );
-   fputs(" C Programming Language", fp);
-   fclose(fp);
+ int * numptr;
+ int number = 5;
+ numptr = &number;
+ printfPtr(numptr);
    
    return(0);
 }  
 
+void printfPtr(int * num){
+   printf("%d",*num);
+}

@@ -95,7 +95,7 @@ bool is_header = false;
 long bigdelta = 0;
 int other_cpu_active = 0;
 int skipping = 0;
-int skipped = 0;s
+int skipped = 0;
 
 int fb_max = 12;
 
@@ -320,7 +320,6 @@ void setup() {
 
   print_stats("After ftp init Core: ");
 
-
   //
   //  startup defaults  -- EDIT HERE
   //  zzz
@@ -334,7 +333,7 @@ void setup() {
   total_frames = 1800;     // 1800 frames or 60 x 30 = 30 minutes
   xlength = total_frames * capture_interval / 1000;
 
-  new_config = 5;  // 5 means we have not configured the camera
+  new_config = 3;  // 5 means we have not configured the camera
                    // 1 setup as vga, 2 setup as uxga
                    // 3 move from uxga -> vga
                    // 4 move from vga -> uxga
@@ -475,7 +474,7 @@ void make_avi( ) {
           Serial.print("Config:       "); Serial.print(total_frames * capture_interval ) ; Serial.print(" (");
           Serial.print(total_frames); Serial.print(" x "); Serial.print(capture_interval);  Serial.println(")");
 
-          digitalWrite(stat_led, LOW);                                                       // close the file
+          digitalWrite(stat_led, LOW);// close the file
 
           end_avi();
 
@@ -488,7 +487,7 @@ void make_avi( ) {
             recording = 0;
           }
 
-        } else  {          // regular
+        } else  {         // regular
 
           another_save_avi();
 
@@ -672,21 +671,21 @@ static esp_err_t another_save_avi() {
     uVideoLen += jpeg_size;
 
     bw = millis();
-    size_t dc_err = fwrite(dc_buf, 1, 4, avifile);
-    size_t ze_err = fwrite(zero_buf, 1, 4, avifile);
-
+   
     //bw = millis();
-    size_t err = fwrite(fb_q[fb_out]->buf, 1, fb_q[fb_out]->len, avifile);
+
+    size_t err = hspiTransfer(fb_q[fb_out]->buf, 1, fb_q[fb_out]->len);
     if (err == 0 ) {
       Serial.println("Error on avi write");
       major_fail();
     }
 
+
     //xSemaphoreTake( baton, portMAX_DELAY );
-    esp_camera_fb_return(fb_q[fb_out]);     // release that buffer back to the camera system
+    esp_camera_fb_return(fb_q[fb_out]);// release that buffer back to the camera system
     xSemaphoreGive( baton );
 
-    remnant = (4 - (jpeg_size & 0x00000003)) & 0x00000003; 
+    remnant = (4 - (jpeg_size & 0x00000003)) & 0x00000003;
 
 
     idx_offset = idx_offset + jpeg_size + remnant + 8;
@@ -697,20 +696,20 @@ static esp_err_t another_save_avi() {
       size_t rem_err = fwrite(zero_buf, 1, remnant, avifile);
     }
 
-    fileposition = ftell (avifile);       // Here, we are at end of chunk (after padding)
-    fseek(avifile, fileposition - jpeg_size - 4, SEEK_SET);    // Here we are the the 4-bytes blank placeholder
+    fileposition = ftell (avifile);// Here, we are at end of chunk (after padding)
+    fseek(avifile, fileposition - jpeg_size - 4, SEEK_SET);// Here we are the the 4-bytes blank placeholder
 
-    print_quartet(jpeg_size, avifile);    // Overwrite placeholder with actual frame size (without padding)
+    print_quartet(jpeg_size, avifile);// Overwrite placeholder with actual frame size (without padding)
 
     fileposition = ftell (avifile);
 
-    fseek(avifile, fileposition + 6, SEEK_SET);    // Here is the FOURCC "JFIF" (JPEG header)
-    // Overwrite "JFIF" (still images) with more appropriate "AVI1"
+    fseek(avifile, fileposition + 6, SEEK_SET);// Here is the FOURCC "JFIF" (JPEG header)
+    //Overwrite "JFIF" (still images) with more appropriate "AVI1"
 
     size_t av_err = fwrite(avi1_buf, 1, 4, avifile);
 
     fileposition = ftell (avifile);
-    fseek(avifile, fileposition + jpeg_size - 10 , SEEK_SET);
+    fseek(avifile, fileposition + jpeg_size - 10, SEEK_SET);
     //Serial.println("Write done");
     totalw = totalw + millis() - bw;
 
@@ -725,13 +724,24 @@ static esp_err_t another_save_avi() {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 //  end_avi runs on cpu 1, empties the queue of frames, writes the index, and closes the files
+//hspiTransfer(&fb_q[fb_out]->buf,fb_q[fb_out]->len)
+size_t hspiTransfer(camera_fb_t * buf, uint16_t buf_len){
+ 
+ int i = 0;
+ while(i<buf_len){
+   hspi->transfer(*buf[i]);
+   ++i;
+ }
+  
+  return err;
+}
 //
 
 static esp_err_t end_avi() {
 
   unsigned long current_end = 0;
 
-  other_cpu_active = 0 ;
+  other_cpu_active = 0;
 
   Serial.print(" Write Q: "); Serial.print((fb_in + fb_max - fb_out) % fb_max); Serial.print(" in/out  "); Serial.print(fb_in); Serial.print(" / "); Serial.println(fb_out);
 
@@ -759,12 +769,12 @@ static esp_err_t end_avi() {
   Serial.print(frame_cnt);
   Serial.print(F(" frames\nFile size is "));
   Serial.print(movi_size + 12 * frame_cnt + 4);
-   Serial.print(F(" bytes\nActual FPS is "));
+  Serial.print(F(" bytes\nActual FPS is "));
   Serial.print(fRealFPS, 2);
   Serial.print(F("\nMax data rate is "));
   Serial.print(max_bytes_per_sec);
   Serial.print(F(" byte/s\nFrame duration is "));  Serial.print(us_per_frame);  Serial.println(F(" us"));
-  Serial.print(F("Average frame length is "));  Serial.print(uVideoLen / frame_cnt);  Serial.println(F(" bytes"));
+  Serial.print(F("Average frame length is "));  Serial.print(uVideoLen / frame_cnt);  Serial.println(F(" bytes");
   Serial.print("Average picture time (ms) "); Serial.println( totalp / frame_cnt );
   Serial.print("Average write time (ms) "); Serial.println( totalw / frame_cnt );
   Serial.print("Frames Skipped % ");  Serial.println( 100.0 * skipped / frame_cnt, 1 );
@@ -772,7 +782,6 @@ static esp_err_t end_avi() {
   Serial.println("Writing the index");
   
   Serial.println("---");
-  //WiFi.printDiag(Serial);
 
 }
 
@@ -797,4 +806,7 @@ void loop()
   delay(10);
 
 }
+
+
+
 
